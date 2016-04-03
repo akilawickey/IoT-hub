@@ -5,7 +5,7 @@
 #include "DHT.h"
 #include <LiquidCrystal.h>
 #define DHTPIN 8     // what digital pin we're connected to
-LiquidCrystal lcd(6, 7, 5, 4, 3, 2);
+LiquidCrystal lcd(6, 9, 5, 4, 3, 2);
 // pin of the button connected to the arduino board
 const int buttonPin = 1;
 // pin of the led light
@@ -35,7 +35,7 @@ boolean stringComplete = false;
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
 // to 3.3V instead of 5V!
-// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 2 of the sensor to whatever your DHTPIN is 
 // Connect pin 4 (on the right) of the sensor to GROUND
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 
@@ -71,13 +71,13 @@ void setup() {
  
   pinMode(buttonPin, INPUT);
   // initialize the LED pin as an output:
-  pinMode(ledPin, OUTPUT);
-  pinMode(9, OUTPUT);
+  //pinMode(ledPin, OUTPUT);
+  //pinMode(9, OUTPUT);
 
   dht.begin();
   lcd.begin(16, 4);
      // set up the LCD's number of columns and rows:
- 
+ lcd.print("IOT GREENHOUSE");
   while ( status != WL_CONNECTED) {
     Serial.println();
     Serial.print("Connecting by WPA to SSID: " + (String)ssid + " ...");
@@ -86,6 +86,8 @@ void setup() {
   Serial.println("connected.");
   while (!client.connected()) {
     Serial.print("Connecting to mosquitto server: ");
+    lcd.clear();
+    lcd.print(mqttServer);
     Serial.print(mqttServer);
     Serial.print(":");
     Serial.println(mqttServerPort);
@@ -100,14 +102,14 @@ void setup() {
   Serial.println("Publish to topic: " + pubTopic);
   Serial.println();
 
-   
+      lcd.clear(); 
+
 }
 
 
 void loop() {
 
   
-   
   
   if(client.connected()) {
 //    the data will be insert with measurement server timestamp
@@ -160,7 +162,7 @@ void loop() {
     // set the cursor to column 0, line 1
   // (note: line 1 is the second row, since counting begins with 0):
   lcd.setCursor(0, 0);
-  lcd.print("humidity");
+  lcd.print("humidity ");
   lcd.setCursor(10, 0);
   // print the number of seconds since reset:
   lcd.print(h);
@@ -201,9 +203,12 @@ void loop() {
     String soil = "series e:" + entityID + " m:soil moisture=" + (String)soil_value;  
     Serial.println("sending row: '" + soil + "' ...");
     client.publish(pubTopic,soil);
+    String light = "series e:" + entityID + " m:light intensity=" + (String)light_value;  
+    Serial.println("sending row: '" + light + "' ...");
+    client.publish(pubTopic,light);
     Serial.println("sended.");
     client.loop();
-    delay(1000);
+    delay(5000);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
