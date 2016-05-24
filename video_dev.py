@@ -63,12 +63,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
        	cv2.imshow(' Edge Ditection ',edges)
     	# Convert BGR to HSV
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-	# define range of blue color in HSV
+	# define range of yellow color in HSV
         lower_blue = np.array([0,100,100])
         upper_blue = np.array([255,255,255])
 
        
-	 # Threshold the HSV image to get only blue colors
+	 # Threshold the HSV image to get only yellow colors
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
 
