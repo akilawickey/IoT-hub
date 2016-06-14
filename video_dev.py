@@ -38,7 +38,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
  	
  	
  	img = cv2.imread('hello.jpg')
- 	
+ 	#ok
 
 
  	cv2.rectangle(img,(384,200),(510,128),(0,255,0),3)
