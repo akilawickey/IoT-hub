@@ -11,12 +11,13 @@
 #include <ESP8266WiFi.h>
 #include "HTTPSRedirect.h"
 #include "DHT.h"
+#define DHTPIN D0
 
-#define DHTPIN D0  
+#define DHTTYPE DHT22 
 
 // Replace with your network credentials
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "ZTE";
+const char* password = "12345678912340000000000000";
 
 const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
@@ -32,11 +33,12 @@ const int httpsPort = 443;
 //const char* fingerprint = "94 2F 19 F7 A8 B4 5B 09 90 34 36 B2 2A C4 7F 17 06 AC 6A 2E";
 const char* fingerprint = "F0 5C 74 77 3F 6B 25 D7 3B 66 4D 43 2F 7E BC 5B E9 28 86 AD";
 const char* fingerprint2 = "94 64 D8 75 DE 5D 3A E6 3B A7 B6 15 52 72 CC 51 7A BA 2B BE";
+DHT dht(DHTPIN, DHTTYPE);
 
 void setup()
 {
   Serial.begin(115200);
-//  DHTPIN.begin();
+  dht.begin();
   Serial.print("Connecting to " + *ssid);
   WiFi.begin(ssid, password);
   Serial.println("going into wl connect");
@@ -52,22 +54,25 @@ void setup()
 }
 void loop()
 {
-  float Humidity = 21.3;
-  float Temperature = 11.2;
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
   
 //  float Humidity = DHT.humidity;
 //  float Temperature = DHT.temperature;
-  String url = String("/macros/s/") + GScriptId + String("/exec?Temperature=") + Temperature + String("&Humidity=") + Humidity;
-  if (isnan(Humidity) || isnan(Temperature))
+  String url = String("/macros/s/") + GScriptId + String("/exec?Temperature=") + t + String("&Humidity=") + h;
+  if (isnan(h) || isnan(t))
   {
     Serial.println("Failed to read from DHT sensor!");
     return;
   }
   Serial.print("Humidity: ");
-  Serial.print(Humidity);
+  Serial.print(h);
   Serial.print(" %\t");
   Serial.print("Temperature in Cel: ");
-  Serial.print(Temperature);
+  Serial.print(t);
   Serial.print(" *C ");
   HTTPSRedirect client(httpsPort);
   Serial.print("Connecting to ");
