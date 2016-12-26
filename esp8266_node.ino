@@ -1,6 +1,10 @@
 
 #include <ESP8266WiFi.h>
 #include "HTTPSRedirect.h"
+#include "DHT.h"
+#define DHTPIN D0
+
+#define DHTTYPE DHT22 
 
 const char* ssid = "ZTE";
 const char* password = "12345678912340000000000000";
@@ -25,9 +29,12 @@ const char* fingerprint = "F0 5C 74 77 3F 6B 25 D7 3B 66 4D 43 2F 7E BC 5B E9 28
 
 // We will take analog input from A0 pin 
 const int AnalogIn     = A0; 
+DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
   Serial.begin(115200);
+  dht.begin();
+
   Serial.println("Connecting to wifi: ");
   Serial.println(ssid);
   Serial.flush();
@@ -87,12 +94,20 @@ void postData(String tag, float value){
 
 // Continue pushing data at a given interval
 void loop() {
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+
   
   // Read analog value, in this case a soil moisture
   int data = 1023 - analogRead(AnalogIn);
 
   // Post these information
   postData("SoilMoisture", data);
+  postData("Humidity", h);
+  postData("Temperature ", t);
+
+
   
   delay (dataPostDelay);
 }
