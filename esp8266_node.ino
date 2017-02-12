@@ -27,8 +27,7 @@ const char* password = "123456789";
 
 // The ID below comes from Google Sheets.
 // Towards the bottom of this page, it will explain how this can be obtained
-const char *GScriptId = "AKfycby42E0NLno0D6L66odVyMFm9YTBw2LhWE0uyabWRgPpNE3PhJSj";
-// web app url https://script.google.com/macros/s/AKfycby42E0NLno0D6L66odVyMFm9YTBw2LhWE0uyabWRgPpNE3PhJSj/exec
+const char *GScriptId = "ID of your google script";
 // Push data on this interval
 const int dataPostDelay = 4000;  // 15 minutes = 15 * 60 * 1000
 
