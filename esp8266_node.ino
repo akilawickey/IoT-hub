@@ -1,13 +1,29 @@
 
+/*
+        IoT Greenhouse Code
+        
+        Akila Wickey 
+
+        This IoT Greenhouse consists of low power Node MSU esp8266 and few sensors
+        Here i have used AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor and Rain drop detection sensor     
+*/
+
 #include <ESP8266WiFi.h>
 #include "HTTPSRedirect.h"
+#include <Wire.h>
+#include <BH1750.h>
 #include "DHT.h"
-#define DHTPIN D0
 
-#define DHTTYPE DHT22 
+#define DHTPIN D4 
+#define LIGHT_sensor D3
 
-const char* ssid = "ZTE";
-const char* password = "12345678912340000000000000";
+
+#define DHTTYPE DHT21   // DHT 21 (AM2301)
+BH1750 lightMeter;
+
+
+const char* ssid = "AirDroidAP";
+const char* password = "123456789";
 
 // The ID below comes from Google Sheets.
 // Towards the bottom of this page, it will explain how this can be obtained
@@ -32,9 +48,9 @@ const int AnalogIn     = A0;
 DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   dht.begin();
-
+  lightMeter.begin();
   Serial.println("Connecting to wifi: ");
   Serial.println(ssid);
   Serial.flush();
@@ -94,18 +110,24 @@ void postData(String tag, float value){
 
 // Continue pushing data at a given interval
 void loop() {
+ // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
   float t = dht.readTemperature();
-
-  
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
   // Read analog value, in this case a soil moisture
-  int data = 1023 - analogRead(AnalogIn);
+  int data = analogRead(AnalogIn);
 
+  // get the light sensor values
+  uint16_t lux = lightMeter.readLightLevel();
+  Serial.print(lux);
   // Post these information
   postData("SoilMoisture", data);
-  postData("Humidity", h);
-  postData("Temperature ", t);
+  postData("Humidity",h);
+  postData("Temperature",t);
+  postData("Light",lux);
 
 
   
