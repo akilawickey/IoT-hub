@@ -5,7 +5,13 @@
         Akila Wickey 
 
         This IoT Greenhouse consists of low power Node MSU esp8266 and few sensors
-        Here i have used AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor and Rain drop detection sensor     
+        Here i have used AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor and Rain drop detection sensor    
+
+
+         Light VCC  –  Wemos 3.3v
+               GND – Wemos Gnd
+               SCL – Wemos D1
+               SDA – Wemos D2
 */
 
 #include <ESP8266WiFi.h>
@@ -21,15 +27,18 @@
 #define DHTTYPE DHT21   // DHT 21 (AM2301)
 BH1750 lightMeter;
 
-
-const char* ssid = "AirDroidAP";
-const char* password = "123456789";
+const char* ssid = "ZTE";
+const char* password = "12345678912340000000000000";
+//
+//  const char* ssid = "AirDroidAP";
+//  const char* password = "123456789";
 
 // The ID below comes from Google Sheets.
 // Towards the bottom of this page, it will explain how this can be obtained
-const char *GScriptId = "ID of your google script";
+const char *GScriptId = "Your ID ";
+// web app url https://script.google.com/macros/s/AKfycby42E0NLno0D6L66odVyMFm9YTBw2LhWE0uyabWRgPpNE3PhJSj/exec
 // Push data on this interval
-const int dataPostDelay = 4000;  // 15 minutes = 15 * 60 * 1000
+const int dataPostDelay = 30000;  // 15 minutes = 15 * 60 * 1000
 
 const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
@@ -47,7 +56,7 @@ const int AnalogIn     = A0;
 DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   dht.begin();
   lightMeter.begin();
   Serial.println("Connecting to wifi: ");
@@ -121,7 +130,7 @@ void loop() {
 
   // get the light sensor values
   uint16_t lux = lightMeter.readLightLevel();
-  Serial.print(lux);
+ 
   // Post these information
   postData("SoilMoisture", data);
   postData("Humidity",h);
