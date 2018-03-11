@@ -1,3 +1,6 @@
+/*
+IOT Greenhouse sensor node - Akila Wickey
+*/
 #include <MQTTClient.h>
 #include <SPI.h>
 #include <WiFi.h>
@@ -53,18 +56,13 @@ int status = WL_IDLE_STATUS;   // the Wifi radio's status
 String entityID = "";
 String mqttServer = "192.168.43.222";
 int mqttServerPort = 1883;
-//String pubTopic = "iot/" + entityID + "/pub";
-//String subTopic = "iot/" + entityID + "/sub";
-
 String pubTopic = "hello/world";
 String subTopic = "hello/world";  
-
 WiFiClient net;
 MQTTClient client(mqttServer.c_str(),1883, net);
 
 void setup() {
   Serial.begin(9600);
- 
   pinMode(buttonPin, INPUT);
   dht.begin();
   lcd.begin(16, 4);
@@ -85,7 +83,6 @@ void setup() {
     Serial.println(mqttServerPort);
     client.connect(entityID.c_str());
   }
-  
   Serial.println("Connection with mqtt server established.");
   Serial.print("subscribing to topic: " + subTopic + " ...");
   client.subscribe(subTopic);
@@ -95,17 +92,15 @@ void setup() {
   Serial.println();
   lcd.clear(); 
 }
-
 void loop() {  
   if(client.connected()) {
-//  the data will be insert with measurement server timestamp
-//  Any data row that will be publish can not contain more then 80 letters.
-    soil_value= analogRead(soil);
-    light_value= analogRead(light);
-    //soil_value= soil_value/10;
-   Serial.println(soil_value);
-   Serial.println();
-   Serial.println(light_value);
+  //  the data will be insert with measurement server timestamp
+  //  Any data row that will be publish can not contain more then 80 letters.
+  soil_value= analogRead(soil);
+  light_value= analogRead(light);
+  Serial.println(soil_value);
+  Serial.println();
+  Serial.println(light_value);
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
@@ -113,20 +108,15 @@ void loop() {
   float t = dht.readTemperature();
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
-
-
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(t) || isnan(f)) {
-    Serial.println("Failed to read from DHT sensor!");
-    return;
+   Serial.println("Failed to read from DHT sensor!");
+   return;
   }
-
   // Compute heat index in Fahrenheit (the default)
   float hif = dht.computeHeatIndex(f, h);
   // Compute heat index in Celsius (isFahreheit = false)
   float hic = dht.computeHeatIndex(t, h, false);
-  
-//
   Serial.print("Humidity: ");
   Serial.print(h);
   Serial.print(" %\t");
@@ -140,8 +130,7 @@ void loop() {
   Serial.print(" *C ");
   Serial.print(hif);
   Serial.println(" *F");
-
-    // set the cursor to column 0, line 1
+  // set the cursor to column 0, line 1
   // (note: line 1 is the second row, since counting begins with 0):
   lcd.setCursor(0, 0);
   lcd.print("humidity ");
@@ -150,7 +139,7 @@ void loop() {
   lcd.print(h);
   lcd.setCursor(0, 1);
   lcd.print("Temper");
-   lcd.setCursor(10, 1);
+  lcd.setCursor(10, 1);
   // print the number of seconds since reset:
   lcd.print(t);
   lcd.setCursor(15, 1);
@@ -160,60 +149,51 @@ void loop() {
   // print the number of seconds since reset:
   lcd.print(f);
   lcd.setCursor(0, 2);
-   lcd.print("soil mois");
+  lcd.print("soil mois");
   lcd.setCursor(15, 2);
   // print the number of seconds since reset:
   lcd.print(soil_value);
-   lcd.setCursor(0, 3);
-   lcd.print("light inten");
+  lcd.setCursor(0, 3);
+  lcd.print("light inten");
   lcd.setCursor(15, 3);
   // print the number of seconds since reset:
   lcd.print(light_value);
+  String data = "series e:" + entityID + " m:millis=" + (String)getData();
+  Serial.println("sending row: '" + data + "' ...");
+  client.publish(pubTopic,data);
+  Serial.println("sended.");
+  String temperature = "series e:" + entityID + " m:temperature=" + (String)getTemperature();  
+  Serial.println("sending row: '" + temperature + "' ...");
+  client.publish(pubTopic,temperature);
+  Serial.println("sended.");
+  String humidity = "series e:" + entityID + " m:humidity=" + (String)getHumidity();  
+  Serial.println("sending row: '" + humidity + "' ...");
+  client.publish(pubTopic,humidity);
+  String soil = "series e:" + entityID + " m:soil moisture=" + (String)soil_value;  
+  Serial.println("sending row: '" + soil + "' ...");
+  client.publish(pubTopic,soil);
+  String light = "series e:" + entityID + " m:light intensity=" + (String)light_value;  
+  Serial.println("sending row: '" + light + "' ...");
+  client.publish(pubTopic,light);
+  Serial.println("sended.");
+  client.loop();
+  delay(5000);
 
-
-    String data = "series e:" + entityID + " m:millis=" + (String)getData();
-    Serial.println("sending row: '" + data + "' ...");
-    client.publish(pubTopic,data);
-    Serial.println("sended.");
-    String temperature = "series e:" + entityID + " m:temperature=" + (String)getTemperature();  
-    Serial.println("sending row: '" + temperature + "' ...");
-    client.publish(pubTopic,temperature);
-    Serial.println("sended.");
-    String humidity = "series e:" + entityID + " m:humidity=" + (String)getHumidity();  
-    Serial.println("sending row: '" + humidity + "' ...");
-    client.publish(pubTopic,humidity);
-    String soil = "series e:" + entityID + " m:soil moisture=" + (String)soil_value;  
-    Serial.println("sending row: '" + soil + "' ...");
-    client.publish(pubTopic,soil);
-    String light = "series e:" + entityID + " m:light intensity=" + (String)light_value;  
-    Serial.println("sending row: '" + light + "' ...");
-    client.publish(pubTopic,light);
-    Serial.println("sended.");
-    client.loop();
-    delay(5000);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-    
   } else {
     Serial.println("Disconnected from server. Require to restart device.");
     while(true){delay(5000);}
   }
 
 }
-
-
 double getData() {
   return 200.0*sin((double)millis()/100000.0) + 300.0;
 }
-
 float getTemperature() {
   return dht.readTemperature();
 }
 float getHumidity() {
   return dht.readHumidity();
 }
-
 void messageReceived(String topic, String payload, char * bytes, unsigned int length) {
   Serial.print("incomming: ");
   Serial.print(topic);
