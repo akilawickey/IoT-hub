@@ -59,25 +59,17 @@ int mqttServerPort = 1883;
 String pubTopic = "hello/world";
 String subTopic = "hello/world";  
 
-
-
-
 WiFiClient net;
 MQTTClient client(mqttServer.c_str(),1883, net);
-
 
 void setup() {
   Serial.begin(9600);
  
   pinMode(buttonPin, INPUT);
-  // initialize the LED pin as an output:
-  //pinMode(ledPin, OUTPUT);
-  //pinMode(9, OUTPUT);
-
   dht.begin();
   lcd.begin(16, 4);
-     // set up the LCD's number of columns and rows:
- lcd.print("IOT GREENHOUSE");
+  // set up the LCD's number of columns and rows:
+  lcd.print("IOT GREENHOUSE");
   while ( status != WL_CONNECTED) {
     Serial.println();
     Serial.print("Connecting by WPA to SSID: " + (String)ssid + " ...");
@@ -101,23 +93,13 @@ void setup() {
   Serial.println();
   Serial.println("Publish to topic: " + pubTopic);
   Serial.println();
-
-      lcd.clear(); 
-
+  lcd.clear(); 
 }
 
-
-void loop() {
-
-  
-  
+void loop() {  
   if(client.connected()) {
-//    the data will be insert with measurement server timestamp
+//  the data will be insert with measurement server timestamp
 //  Any data row that will be publish can not contain more then 80 letters.
-
-
-//////////////////////////////////////////////////////////////////////////////////////
-
     soil_value= analogRead(soil);
     light_value= analogRead(light);
     //soil_value= soil_value/10;
