@@ -1,17 +1,16 @@
 
 /*
-        IoT Greenhouse Code
-        
-        Akila Wickey 
+IoT Greenhouse Code
 
-        This IoT Greenhouse consists of low power Node MSU esp8266 and few sensors
-        Here i have used AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor and Rain drop detection sensor    
+Akila Wickey 
 
+This IoT Greenhouse consists of low power Node MSU esp8266 and few sensors
+Here i have used AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor and Rain drop detection sensor    
 
-         Light VCC  –  Wemos 3.3v
-               GND – Wemos Gnd
-               SCL – Wemos D1
-               SDA – Wemos D2
+VCC  –  Wemos 3.3v
+GND – Wemos Gnd
+SCL – Wemos D1
+SDA – Wemos D2
 */
 
 #include <ESP8266WiFi.h>
@@ -23,19 +22,14 @@
 #define DHTPIN D4 
 #define LIGHT_sensor D3
 
-
 #define DHTTYPE DHT21   // DHT 21 (AM2301)
 BH1750 lightMeter;
 
-const char* ssid = "ZTE";
-const char* password = "12345678912340000000000000";
-//
-//  const char* ssid = "AirDroidAP";z
-//  const char* password = "123456789";
-
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
 // The ID below comes from Google Sheets.
 // Towards the bottom of this page, it will explain how this can be obtained
-const char *GScriptId = "AKfycby42E0NLno0D6L66odVyMFm9YTBw2LhWE0uyabWRgPpNE3PhJSj";
+const char *GScriptId = "Your ID ";
 // web app url https://script.google.com/macros/s/AKfycby42E0NLno0D6L66odVyMFm9YTBw2LhWE0uyabWRgPpNE3PhJSj/exec
 // Push data on this interval
 const int dataPostDelay = 30000;  // 15 minutes = 15 * 60 * 1000
@@ -70,8 +64,6 @@ void setup() {
   }
   Serial.println(" IP address: ");
   Serial.println(WiFi.localIP());
-
-  
   Serial.print(String("Connecting to "));
   Serial.println(host);
 
@@ -136,8 +128,5 @@ void loop() {
   postData("Humidity",h);
   postData("Temperature",t);
   postData("Light",lux);
-
-
-  
   delay (dataPostDelay);
 }

@@ -1,17 +1,28 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
+#include <BH1750.h>
+#include "DHT.h"
+
+#define DHTPIN D4 
+#define LIGHT_sensor D3
+
+#define DHTTYPE DHT21   // DHT 21 (AM2301)
+BH1750 lightMeter;
+// We will take analog input from A0 pin 
+const int AnalogIn     = A0; 
+DHT dht(DHTPIN, DHTTYPE);
 
 void callback(char* topic, byte* payload, unsigned int length);
 //EDIT THESE LINES TO MATCH YOUR SETUP
-#define MQTT_SERVER "192.168.8.101"
-const char* ssid = "asak";
-const char* password = "19921004";
+#define MQTT_SERVER "MQTT_SERVER_ADDRESS"
+
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
 
 //LED on ESP8266 GPIO2
 const int lightPin = LED_BUILTIN;
 
 char* lightTopic = "testTopic";
-
 
 WiFiClient wifiClient;
 PubSubClient client(MQTT_SERVER, 1883, callback, wifiClient);
@@ -25,17 +36,14 @@ void setup() {
   Serial.begin(115200);
   delay(100);
 
-
   //start wifi subsystem
   WiFi.begin(ssid, password);
   //attempt to connect to the WIFI network and then connect to the MQTT server
   reconnect();
 
   //wait a bit before starting the main loop
-      delay(2000);
+  delay(2000);
 }
-
-
 
 void loop(){
 
@@ -47,10 +55,26 @@ void loop(){
 
   //MUST delay to allow ESP8266 WIFI functions to run
   delay(10); 
-  //          client.publish(lightTopic, "Light On");
+
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
+  // Read analog value, in this case a soil moisture
+  int data = analogRead(AnalogIn);
+
+  // get the light sensor values
+  uint16_t lux = lightMeter.readLightLevel();
+ 
+  // Post these information
+  client.publish(lightTopic, h);
+  client.publish(lightTopic, t);
+  client.publish(lightTopic, f);
+  client.publish(lightTopic, data);
+  client.publish(lightTopic, lux);
 
 }
-
 
 void callback(char* topic, byte* payload, unsigned int length) {
 
@@ -68,7 +92,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     //client.publish("/test/confirm", "Light On");
 
   }
-
   //turn the light off if the payload is '0' and publish to the MQTT server a confirmation message
   else if (payload[0] == '0'){
     digitalWrite(lightPin, LOW);
@@ -77,11 +100,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 }
 
-
-
-
 void reconnect() {
-  
 
   //attempt to connect to the wifi if connection is lost
   if(WiFi.status() != WL_CONNECTED){
@@ -122,13 +141,11 @@ void reconnect() {
         client.subscribe(lightTopic);
 
       }
-
       //otherwise print failed for debugging
       else{Serial.println("\tFailed."); abort();}
     }
   }
 }
-
 //generate unique name from MAC addr
 String macToStr(const uint8_t* mac){
 
@@ -141,6 +158,5 @@ String macToStr(const uint8_t* mac){
       result += ':';
     }
   }
-
   return result;
 }  
