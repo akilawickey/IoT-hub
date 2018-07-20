@@ -1,36 +1,73 @@
+/**
+  IoT Sensor Node for any Sensor - Nodemcu code
+  
+  Name: my_multiply_doc
+  Purpose: Here we use low power Node MSU esp8266 and following sensors
+           AM2301 Humidity and Temperature sensor, BH1750FVI Light sensor, Soil moisture sensor
+  @author Akila Wickey
+  @version 1.0 05/01/18
+
+   Light sensor BH1750FVI       VCC  –  Wemos 3.3v
+                                GND – Wemos Gnd
+                                SCL – Wemos D1
+                                SDA – Wemos D2
+                                
+   Soil sensor BH1750FVI        VCC  –  Wemos 3.3v
+                                GND – Wemos Gnd
+                                A0 – Wemos A0 
+                                
+   AM2301 temp humidity sensor  VCC  –  Wemos 3.3v
+                                GND – Wemos Gnd
+                                Digital pin  – Wemos D5 
+                     
+*/
+
+#include <Wire.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
+#include <WiFiManager.h>
+#include <Wire.h>
 #include <BH1750.h>
-#include "DHT.h"
 
-#define DHTPIN D4 
-#define LIGHT_sensor D3
-
-#define DHTTYPE DHT21   // DHT 21 (AM2301)
+#include "DHTesp.h"
+#ifdef ESP32
+#pragma message(THIS EXAMPLE IS FOR ESP8266 ONLY!)
+#error Select ESP8266 board.
+#endif
+DHTesp dht;
+//#define LIGHT_sensor D3
 BH1750 lightMeter;
-// We will take analog input from A0 pin 
-const int AnalogIn     = A0; 
-DHT dht(DHTPIN, DHTTYPE);
 
 void callback(char* topic, byte* payload, unsigned int length);
 //EDIT THESE LINES TO MATCH YOUR SETUP
-#define MQTT_SERVER "MQTT_SERVER_ADDRESS"
+#define MQTT_SERVER "IP ADDRESS"
 
 const char* ssid = "SSID";
-const char* password = "PASSWORD";
+const char* password = "PWD";
+const int lightPin = D5;
 
-//LED on ESP8266 GPIO2
-const int lightPin = LED_BUILTIN;
+// please define your topics
+char* lightTopic   = "light";
+char* tempTopic   = "temp";
+char* humTopic   = "hum";
+char* soilTopic   = "soil";
 
-char* lightTopic = "testTopic";
+char charBuf_temp[50];
+char charBuf_hum[50];
+char charBuf_light[50];
+char charBuf_soil[50];
 
+// We will take analog input from A0 pin 
+const int AnalogIn     = A0; 
 WiFiClient wifiClient;
+WiFiManager wifiManager;
+
 PubSubClient client(MQTT_SERVER, 1883, callback, wifiClient);
 
 void setup() {
   //initialize the light as an output and set to LOW (off)
   pinMode(lightPin, OUTPUT);
-  digitalWrite(lightPin, LOW);
+  digitalWrite(lightPin, HIGH);
 
   //start the serial line for debugging
   Serial.begin(115200);
@@ -38,11 +75,18 @@ void setup() {
 
   //start wifi subsystem
   WiFi.begin(ssid, password);
+
   //attempt to connect to the WIFI network and then connect to the MQTT server
   reconnect();
 
   //wait a bit before starting the main loop
-  delay(2000);
+  delay(5000);
+  dht.setup(D5, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
+      
+  Wire.begin(); //light sensor SCL and SDA
+  lightMeter.begin();
+
+
 }
 
 void loop(){
@@ -54,54 +98,53 @@ void loop(){
   client.loop();
 
   //MUST delay to allow ESP8266 WIFI functions to run
-  delay(10); 
+  delay(1000); 
+  delay(dht.getMinimumSamplingPeriod());
 
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  float f = dht.readTemperature(true);
+  float h = dht.getHumidity();
+  Serial.println(h);
+  // Read temperature as Celsius (the default)           
+  float t = dht.getTemperature();
+  Serial.println(t);
   // Read analog value, in this case a soil moisture
   int data = analogRead(AnalogIn);
+  Serial.println(t);
 
   // get the light sensor values
   uint16_t lux = lightMeter.readLightLevel();
- 
-  // Post these information
-  client.publish(lightTopic, h);
-  client.publish(lightTopic, t);
-  client.publish(lightTopic, f);
-  client.publish(lightTopic, data);
-  client.publish(lightTopic, lux);
+  Serial.println(lux);
+
+  String humchar = String(h);
+  String tempchar = String(t);
+  String soilchar = String(data);
+  String lightchar = String(lux);
+  
+  humchar.toCharArray(charBuf_hum, 50);
+  tempchar.toCharArray(charBuf_temp, 50);
+  soilchar.toCharArray(charBuf_soil, 50);
+  lightchar.toCharArray(charBuf_light, 50);
+  
+  client.publish(tempTopic, charBuf_temp);
+  client.publish(humTopic, charBuf_hum);
+  client.publish(soilTopic, charBuf_soil);
+  client.publish(lightTopic, charBuf_light);
+  
+  delay(5000);
 
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-
   //convert topic to string to make it easier to work with
   String topicStr = topic; 
-
   //Print out some debugging info
   Serial.println("Callback update.");
   Serial.print("Topic: ");
   Serial.println(topicStr);
 
-  //turn the light on if the payload is '1' and publish to the MQTT server a confirmation message
-  if(payload[0] == '1'){
-    digitalWrite(lightPin, HIGH);
-    //client.publish("/test/confirm", "Light On");
-
-  }
-  //turn the light off if the payload is '0' and publish to the MQTT server a confirmation message
-  else if (payload[0] == '0'){
-    digitalWrite(lightPin, LOW);
-    //client.publish("/test/confirm", "Light Off");
-  }
-
 }
 
 void reconnect() {
-
+ 
   //attempt to connect to the wifi if connection is lost
   if(WiFi.status() != WL_CONNECTED){
     //debug printing
@@ -113,7 +156,6 @@ void reconnect() {
       delay(500);
       Serial.print(".");
     }
-
     //print out some more debug once connected
     Serial.println("");
     Serial.println("WiFi connected");  
@@ -141,11 +183,13 @@ void reconnect() {
         client.subscribe(lightTopic);
 
       }
+
       //otherwise print failed for debugging
       else{Serial.println("\tFailed."); abort();}
     }
   }
 }
+
 //generate unique name from MAC addr
 String macToStr(const uint8_t* mac){
 
@@ -158,5 +202,6 @@ String macToStr(const uint8_t* mac){
       result += ':';
     }
   }
+
   return result;
-}  
+}
