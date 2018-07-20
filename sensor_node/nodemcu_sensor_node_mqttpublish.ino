@@ -21,11 +21,13 @@
                                 Digital pin  – Wemos D5 
                      
 */
-
 #include <Wire.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
-#include <WiFiManager.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
+
 #include <Wire.h>
 #include <BH1750.h>
 
@@ -40,13 +42,10 @@ BH1750 lightMeter;
 
 void callback(char* topic, byte* payload, unsigned int length);
 //EDIT THESE LINES TO MATCH YOUR SETUP
-#define MQTT_SERVER "IP ADDRESS"
+#define MQTT_SERVER "MQ IP"
 
-const char* ssid = "SSID";
-const char* password = "PWD";
 const int lightPin = D5;
 
-// please define your topics
 char* lightTopic   = "light";
 char* tempTopic   = "temp";
 char* humTopic   = "hum";
@@ -59,8 +58,8 @@ char charBuf_soil[50];
 
 // We will take analog input from A0 pin 
 const int AnalogIn     = A0; 
+
 WiFiClient wifiClient;
-WiFiManager wifiManager;
 
 PubSubClient client(MQTT_SERVER, 1883, callback, wifiClient);
 
@@ -71,13 +70,25 @@ void setup() {
 
   //start the serial line for debugging
   Serial.begin(115200);
+  
+  WiFiManager wifiManager;
+  wifiManager.setTimeout(180);
+
+  //fetches ssid and pass and tries to connect
+  //if it does not connect it starts an access point with the specified name
+  //and goes into a blocking loop awaiting configuration
+  wifiManager.setAPCallback(configModeCallback);
+
+  Serial.println("connected...yeey :)");
+
   delay(100);
-
-  //start wifi subsystem
-  WiFi.begin(ssid, password);
-
-  //attempt to connect to the WIFI network and then connect to the MQTT server
-  reconnect();
+  
+   if(!wifiManager.autoConnect()) {
+      Serial.println("failed to connect and hit timeout");
+      //reset and try again, or maybe put it to deep sleep
+      ESP.reset();
+      delay(1000);
+    } 
 
   //wait a bit before starting the main loop
   delay(5000);
@@ -85,7 +96,6 @@ void setup() {
       
   Wire.begin(); //light sensor SCL and SDA
   lightMeter.begin();
-
 
 }
 
@@ -124,6 +134,8 @@ void loop(){
   soilchar.toCharArray(charBuf_soil, 50);
   lightchar.toCharArray(charBuf_light, 50);
   
+//  Serial.println(charBuf_temp+ ' '+tempchar+' '+soilchar+ ' ' + lightchar);
+//  client.publish(nodeTopic, "node/badulla/1/test");
   client.publish(tempTopic, charBuf_temp);
   client.publish(humTopic, charBuf_hum);
   client.publish(soilTopic, charBuf_soil);
@@ -134,8 +146,10 @@ void loop(){
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
+
   //convert topic to string to make it easier to work with
   String topicStr = topic; 
+
   //Print out some debugging info
   Serial.println("Callback update.");
   Serial.print("Topic: ");
@@ -143,19 +157,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 }
 
+void configModeCallback (WiFiManager *myWiFiManager) {
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
+
+  Serial.println(myWiFiManager->getConfigPortalSSID());
+}
+
 void reconnect() {
- 
+  
   //attempt to connect to the wifi if connection is lost
   if(WiFi.status() != WL_CONNECTED){
     //debug printing
     Serial.print("Connecting to ");
-    Serial.println(ssid);
+//    Serial.println(ssid);
 
     //loop while we wait for connection
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
+
     //print out some more debug once connected
     Serial.println("");
     Serial.println("WiFi connected");  
