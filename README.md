@@ -7,6 +7,8 @@ Here we take a Greenhouse Controlling System for the example.
 This IoT Greenhouse consists of low power Node MSU esp8266 and few sensors. Here i have used following Sensor modules.
 
         * AM2301 Humidity and Temperature sensor
+        * AM2320 Humidity and Temperature sensor
+        * MQ Gas Sensor
         * BH1750FVI Light sensor
         * Soil moisture sensor
         * Rain drop detection sensor     
