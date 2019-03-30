@@ -1,0 +1,3 @@
+[submodule "sensor_node/sensordata-google-sheet"]
+	path = sensor_node/sensordata-google-sheet
+	url = git@github.com:akilawickey/sensordata-google-sheet.git
